@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Constantes Decimales</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .analysis-step {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .step-active {
+            background-color: #e3f2fd;
+            border-left: 4px solid #1565c0;
+        }
+        .example-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .example-card:hover {
+            transform: translateY(-5px);
+        }
+        .state-machine {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .error-details {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="mb-0">Analizador de Constantes Decimales</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label class="form-label">Ingrese una constante decimal:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="entrada" 
+                                       placeholder="Ej: 3.2E-2, 22.5, 0.1E3">
+                                <button class="btn btn-primary" onclick="analizar()">Analizar</button>
+                            </div>
+                        </div>
+
+                        <div id="resultado" class="d-none">
+                            <h5>Resultado del análisis:</h5>
+                            <div id="pasos-analisis" class="mb-3"></div>
+                            <div id="mensaje-final" class="alert" role="alert"></div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h5>Ejemplos válidos:</h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="example-card card h-100" onclick="setExample('3.2E-2')">
+                                        <div class="card-body">
+                                            <h6>3.2E-2</h6>
+                                            <small class="text-muted">0.032</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="example-card card h-100" onclick="setExample('22.5')">
+                                        <div class="card-body">
+                                            <h6>22.5</h6>
+                                            <small class="text-muted">Decimal simple</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="example-card card h-100" onclick="setExample('0.1E3')">
+                                        <div class="card-body">
+                                            <h6>0.1E3</h6>
+                                            <small class="text-muted">100</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function esConstanteValida(cadena) {
+            const pasos = [];
+            let valido = true;
+            let mensaje = "";
+
+            // Validaciones paso a paso
+            if (cadena === "") {
+                valido = false;
+                mensaje = "La entrada está vacía";
+                pasos.push({texto: "Verificando entrada...", estado: "error"});
+                return { valido, mensaje, pasos };
+            }
+
+            pasos.push({texto: "Entrada recibida: " + cadena, estado: "success"});
+
+            // Verificar múltiples E's
+            const countE = (cadena.match(/E/g) || []).length;
+            if (countE > 1) {
+                valido = false;
+                mensaje = "No se permite más de un exponente (E)";
+                pasos.push({texto: "Se detectaron múltiples exponentes", estado: "error"});
+                return { valido, mensaje, pasos };
+            }
+
+            // Verificar caracteres válidos
+            if (!/^[0-9.E-]+$/.test(cadena)) {
+                valido = false;
+                mensaje = "Caracteres inválidos detectados";
+                pasos.push({texto: "Caracteres inválidos detectados", estado: "error"});
+                return { valido, mensaje, pasos };
+            }
+
+            // Verificar formato decimal básico
+            const partes = cadena.split('E');
+            const parteDecimal = partes[0];
+            const parteExponente = partes[1];
+
+            // Validar parte decimal
+            if (!/^[0-9]+(\.[0-9]+)?$/.test(parteDecimal)) {
+                valido = false;
+                mensaje = "Formato decimal incorrecto";
+                pasos.push({texto: "Formato de la parte decimal incorrecto", estado: "error"});
+                return { valido, mensaje, pasos };
+            }
+            pasos.push({texto: "Parte decimal válida", estado: "success"});
+
+            // Validar exponente si existe
+            if (parteExponente !== undefined) {
+                if (!/^-?[0-9]+$/.test(parteExponente)) {
+                    valido = false;
+                    mensaje = "Formato de exponente incorrecto";
+                    pasos.push({texto: "Formato del exponente incorrecto", estado: "error"});
+                    return { valido, mensaje, pasos };
+                }
+                pasos.push({texto: "Exponente válido", estado: "success"});
+            }
+
+            // Si todo está correcto
+            pasos.push({texto: "Constante decimal válida en base 10", estado: "success"});
+            return { valido, mensaje, pasos };
+        }
+
+        function analizar() {
+            const entrada = document.getElementById("entrada").value.trim();
+            const resultadoDiv = document.getElementById("resultado");
+            const pasosDiv = document.getElementById("pasos-analisis");
+            const mensajeFinal = document.getElementById("mensaje-final");
+
+            const resultado = esConstanteValida(entrada);
+            
+            // Mostrar pasos del análisis
+            resultadoDiv.classList.remove('d-none');
+            pasosDiv.innerHTML = '';
+            
+            resultado.pasos.forEach((paso, index) => {
+                setTimeout(() => {
+                    const pasoElement = document.createElement('div');
+                    pasoElement.className = `analysis-step ${paso.estado === 'success' ? 'step-active' : ''}`;
+                    pasoElement.innerHTML = `
+                        <i class="bi bi-${paso.estado === 'success' ? 'check-circle' : 'x-circle'}-fill"></i>
+                        ${paso.texto}
+                    `;
+                    pasosDiv.appendChild(pasoElement);
+                }, index * 300);
+            });
+
+            // Mostrar mensaje final
+            mensajeFinal.className = `alert alert-${resultado.valido ? 'success' : 'danger'}`;
+            mensajeFinal.textContent = resultado.valido ? 
+                `"${entrada}" es una constante válida.` :
+                `"${entrada}" no es válida: ${resultado.mensaje}`;
+        }
+
+        function setExample(example) {
+            document.getElementById("entrada").value = example;
+            analizar();
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
