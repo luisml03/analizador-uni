@@ -40,3 +40,26 @@ cd sintactico
 
 ## 🛠️ Estructura del Proyecto
 
+```
+sintactico/
+│
+├── index.html          # Interfaz web principal
+├── README.md          # Documentación del proyecto
+├── logo.ico           # Favicon del sitio
+└── banner.jpg         # Imagen de banner principal
+```
+
+### Componentes principales:
+
+- **Interfaz Web**: Implementada en HTML5 con Bootstrap 5
+- **Analizador Léxico**: Núcleo del proyecto, escrito en JavaScript
+- **Documentación**: Este archivo README.md
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo los términos de la Licencia MIT. Consulte el archivo LICENSE para más detalles.
+
+---
+
+Desarrollado con ❤️ por [Tu Nombre](https://tu-sitio-web.com)
+

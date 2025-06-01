@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador y Árbol Sintáctico</title>
+    <link rel="icon" type="image/x-icon" href="logo.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: none;
+            overflow: hidden;
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 1200px;
+        }
+
+        .code-output {
+            background: #2c3e50;
+            color: #fff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .tree {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .tree ul {
+            padding-top: 20px;
+            position: relative;
+            display: table;
+            margin: 0 auto;
+        }
+
+        .tree li {
+            float: left;
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+        }
+
+        .tree li::before, .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid var(--primary-color);
+            width: 50%;
+            height: 20px;
+        }
+
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid var(--primary-color);
+        }
+
+        .tree li:only-child::before, .tree li:only-child::after {
+            display: none;
+        }
+
+        .tree li > span {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        .btn-back {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn btn-primary btn-back">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+
+    <div class="container">
+        <div class="main-card">
+            <h2 class="mb-4">Conversor + Árbol Sintáctico</h2>
+            
+            <div class="input-group mb-4">
+                <input type="text" class="form-control" id="expr" 
+                       placeholder="Ejemplo: y = m * x - b">
+                <button class="btn btn-primary" onclick="procesar()">
+                    <i class="fas fa-cogs"></i> Procesar
+                </button>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>Código ensamblador:</h3>
+                    <pre id="codigo" class="code-output"></pre>
+                </div>
+                <div class="col-md-6">
+                    <h3>Árbol sintáctico:</h3>
+                    <div id="arbol" class="tree"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function tokenizar(expr) {
+        // Separar la expresión en tokens
+        const tokens = expr.split(/\s*([\=\+\-\*\/])\s*/);
+        return tokens.filter(token => token.length > 0);
+    }
+
+    function validarExpresion(tokens) {
+        if (tokens.length < 4) return false; // Mínimo: x = a + b
+        if (tokens[1] !== '=') return false;
+        if ((tokens.length - 3) % 2 !== 0) return false; // Debe tener número par de operandos y operadores
+        return true;
+    }
+
+    function generarCodigoEnsamblador(tokens) {
+        const instrucciones = [];
+        const destino = tokens[0];
+        let currentReg = 1;
+
+        // Primera instrucción
+        instrucciones.push(`MOV R${currentReg}, ${tokens[2]}`);
+
+        // Procesar resto de operaciones
+        for (let i = 3; i < tokens.length; i += 2) {
+            const operador = tokens[i];
+            const operando = tokens[i + 1];
+            const instruccion = operador === '*' ? 'MUL' :
+                              operador === '/' ? 'DIV' :
+                              operador === '+' ? 'ADD' : 'SUB';
+            
+            instrucciones.push(`${instruccion} R${currentReg}, ${operando}`);
+        }
+
+        // Mover resultado final
+        instrucciones.push(`MOV ${destino}, R${currentReg}`);
+        return instrucciones;
+    }
+
+    function construirArbolHTML(tokens) {
+        function construirSubArbol(inicio, fin) {
+            // Caso base: un solo operando
+            if (inicio === fin) {
+                return `<li><span>${tokens[inicio]}</span></li>`;
+            }
+
+            // Encontrar el último operador
+            let ultimoOperador = fin - 1;
+            
+            return `
+                <li><span>${tokens[ultimoOperador]}</span>
+                    <ul>
+                        ${inicio === ultimoOperador - 1 
+                            ? `<li><span>${tokens[inicio]}</span></li>`
+                            : construirSubArbol(inicio, ultimoOperador - 1)}
+                        <li><span>${tokens[fin]}</span></li>
+                    </ul>
+                </li>`;
+        }
+
+        // Separar la parte izquierda (destino) y la expresión
+        const destino = tokens[0];
+        const expresionInicio = 2; // Después del '='
+        const expresionFin = tokens.length - 1;
+
+        return `
+            <ul>
+                <li><span>=</span>
+                    <ul>
+                        <li><span>${destino}</span></li>
+                        ${construirSubArbol(expresionInicio, expresionFin)}
+                    </ul>
+                </li>
+            </ul>`;
+    }
+
+    function procesar() {
+        const input = document.getElementById("expr").value.trim();
+        const codigo = document.getElementById("codigo");
+        const arbol = document.getElementById("arbol");
+        codigo.textContent = '';
+        arbol.innerHTML = '';
+
+        // Tokenizar la entrada
+        const tokens = tokenizar(input);
+
+        // Validar la expresión
+        if (!validarExpresion(tokens)) {
+            codigo.textContent = '❌ Expresión no válida. Ejemplo: y = a + b * c - d';
+            return;
+        }
+
+        // Generar código ensamblador
+        const instrucciones = generarCodigoEnsamblador(tokens);
+        codigo.textContent = instrucciones.join('\n');
+
+        // Construir y mostrar árbol sintáctico
+        arbol.innerHTML = construirArbolHTML(tokens);
+    }
+    </script>
+</body>
+</html>

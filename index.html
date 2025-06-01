@@ -4,44 +4,136 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador de Constantes Decimales</title>
+    <link rel="icon" type="image/x-icon" href="logo.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f8f9fa;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 20px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: none;
+            overflow: hidden;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 1200px;  /* Aumentado de 1000px */
+            padding: 2rem;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #2c3e50 100%);
+            padding: 1.5rem;
+            border: none;
+        }
+
         .analysis-step {
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
+            padding: 1rem;
+            margin: 0.7rem 0;
+            border-radius: 10px;
+            background: var(--secondary-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .step-active {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 4px solid var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .example-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
         }
-        .step-active {
-            background-color: #e3f2fd;
-            border-left: 4px solid #1565c0;
-        }
-        .example-card {
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
+
         .example-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
-        .state-machine {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
+
+        .input-group {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        .error-details {
-            color: #dc3545;
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(74,144,226,0.3);
+        }
+
+        .nav-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: auto;
+            padding: 8px 15px;
             font-size: 0.9rem;
-            margin-top: 5px;
+            background: rgba(74, 144, 226, 0.9);
+            backdrop-filter: blur(5px);
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(74,144,226,0.3);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
+<body>
+    <a href="ensambler.html" class="btn btn-primary nav-button">
+        <i class="fas fa-code"></i> Ensamblador
+    </a>
+    <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
+            <div class="col-12">
+                <div class="main-card">
+                    <div class="card-header text-white">
                         <h2 class="mb-0">Analizador de Constantes Decimales</h2>
                     </div>
                     <div class="card-body">
@@ -89,111 +181,15 @@
                                 </div>
                             </div>
                         </div>
+
+                        
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        function esConstanteValida(cadena) {
-            const pasos = [];
-            let valido = true;
-            let mensaje = "";
-
-            // Validaciones paso a paso
-            if (cadena === "") {
-                valido = false;
-                mensaje = "La entrada está vacía";
-                pasos.push({texto: "Verificando entrada...", estado: "error"});
-                return { valido, mensaje, pasos };
-            }
-
-            pasos.push({texto: "Entrada recibida: " + cadena, estado: "success"});
-
-            // Verificar múltiples E's
-            const countE = (cadena.match(/E/g) || []).length;
-            if (countE > 1) {
-                valido = false;
-                mensaje = "No se permite más de un exponente (E)";
-                pasos.push({texto: "Se detectaron múltiples exponentes", estado: "error"});
-                return { valido, mensaje, pasos };
-            }
-
-            // Verificar caracteres válidos
-            if (!/^[0-9.E-]+$/.test(cadena)) {
-                valido = false;
-                mensaje = "Caracteres inválidos detectados";
-                pasos.push({texto: "Caracteres inválidos detectados", estado: "error"});
-                return { valido, mensaje, pasos };
-            }
-
-            // Verificar formato decimal básico
-            const partes = cadena.split('E');
-            const parteDecimal = partes[0];
-            const parteExponente = partes[1];
-
-            // Validar parte decimal
-            if (!/^[0-9]+(\.[0-9]+)?$/.test(parteDecimal)) {
-                valido = false;
-                mensaje = "Formato decimal incorrecto";
-                pasos.push({texto: "Formato de la parte decimal incorrecto", estado: "error"});
-                return { valido, mensaje, pasos };
-            }
-            pasos.push({texto: "Parte decimal válida", estado: "success"});
-
-            // Validar exponente si existe
-            if (parteExponente !== undefined) {
-                if (!/^-?[0-9]+$/.test(parteExponente)) {
-                    valido = false;
-                    mensaje = "Formato de exponente incorrecto";
-                    pasos.push({texto: "Formato del exponente incorrecto", estado: "error"});
-                    return { valido, mensaje, pasos };
-                }
-                pasos.push({texto: "Exponente válido", estado: "success"});
-            }
-
-            // Si todo está correcto
-            pasos.push({texto: "Constante decimal válida en base 10", estado: "success"});
-            return { valido, mensaje, pasos };
-        }
-
-        function analizar() {
-            const entrada = document.getElementById("entrada").value.trim();
-            const resultadoDiv = document.getElementById("resultado");
-            const pasosDiv = document.getElementById("pasos-analisis");
-            const mensajeFinal = document.getElementById("mensaje-final");
-
-            const resultado = esConstanteValida(entrada);
-            
-            // Mostrar pasos del análisis
-            resultadoDiv.classList.remove('d-none');
-            pasosDiv.innerHTML = '';
-            
-            resultado.pasos.forEach((paso, index) => {
-                setTimeout(() => {
-                    const pasoElement = document.createElement('div');
-                    pasoElement.className = `analysis-step ${paso.estado === 'success' ? 'step-active' : ''}`;
-                    pasoElement.innerHTML = `
-                        <i class="bi bi-${paso.estado === 'success' ? 'check-circle' : 'x-circle'}-fill"></i>
-                        ${paso.texto}
-                    `;
-                    pasosDiv.appendChild(pasoElement);
-                }, index * 300);
-            });
-
-            // Mostrar mensaje final
-            mensajeFinal.className = `alert alert-${resultado.valido ? 'success' : 'danger'}`;
-            mensajeFinal.textContent = resultado.valido ? 
-                `"${entrada}" es una constante válida.` :
-                `"${entrada}" no es válida: ${resultado.mensaje}`;
-        }
-
-        function setExample(example) {
-            document.getElementById("entrada").value = example;
-            analizar();
-        }
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
