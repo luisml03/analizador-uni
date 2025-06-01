@@ -102,5 +102,5 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.m
 
 ## ✉️ Contacto
 
-[Luis hernando martinez londoño] - [luis.martinez.8355@miremington.edu.co]
+[Luis hernando martinez londoño](luis.martinez.8355@miremington.edu.co)
 
